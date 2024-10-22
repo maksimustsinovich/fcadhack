@@ -19,3 +19,8 @@ management:
     metrics:
       export:
         enabled: true
+security:
+  jwt:
+    secret-key: xAZazWvKPfd1nQmQnBdtsjZztQ0rntugxrAlSrmJ9Z0=
+    access-expiration-time: 86400000
+    refresh-expiration-time: 604800000
