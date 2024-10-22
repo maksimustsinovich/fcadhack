@@ -1,0 +1,69 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: "no"
+    command:
+      - "--web.enable-lifecycle"
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+  grafana:
+    image: grafana/grafana:latest
+    restart: "no"
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: true
+    healthcheck:
+      test: curl --fail -s http://localhost:3000/api/health || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+  db:
+    image: postgres:17.0
+    restart: "no"
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_secret
+      POSTGRES_DB: mydb
+    healthcheck:
+      test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+  fcadhack:
+    image: fcadhack:latest
+    build: .
+    restart: "no"
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres_secret
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    depends_on:
+      - db
+volumes:
+  postgres_data:
+networks:
+  monitoring:

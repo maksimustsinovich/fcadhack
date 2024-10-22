@@ -92,4 +92,12 @@ public class FilteringRuleService{
     public void deleteMany(List<Long> ids) {
         filteringRuleRepository.deleteAllById(ids);
     }
+
+    public List<FilteringRuleDto> getEnabled() {
+        return filteringRuleRepository.findAllByStatus(true)
+                .stream()
+                .map(filteringRuleMapper::toDto)
+                .toList();
+    }
+
 }
